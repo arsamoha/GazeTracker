@@ -3,7 +3,8 @@ import time
 from tkinter import *
 
 root = Tk()
-root.geometry("330x220+300+300")
+root.geometry("1680x1050")
+root.attributes('-fullscreen', True)
 
 canvas = Canvas(root)
 canvas.pack(fill=BOTH, expand=1)
@@ -47,7 +48,5 @@ def gaze_data_callback(gaze_data):
 my_eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, gaze_data_callback, as_dictionary=True)
 
 root.mainloop()
-
-time.sleep(5)
 
 my_eyetracker.unsubscribe_from(tr.EYETRACKER_GAZE_DATA, gaze_data_callback)
