@@ -75,7 +75,7 @@ def gaze_data_callback(gaze_data):
 
     def increase_zone():
         global deadZoneY
-        if 0.1 < deadZoneY <= 0.5:
+        if 0.1 <= deadZoneY < 0.5:
             deadZoneY += 0.1
             print('increasing val')
         else:
