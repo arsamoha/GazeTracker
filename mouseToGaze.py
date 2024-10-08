@@ -4,6 +4,8 @@ import sys
 import time
 from pynput.mouse import Controller
 from pynput import keyboard
+import threading
+
 
 # Find all connected eye trackers
 found_eyetrackers = tr.find_all_eyetrackers()
@@ -65,42 +67,41 @@ def gaze_data_callback(gaze_data):
     mouse.position = (mouse_position[0],mouse_position[1])
     #mouse.position = (center_x*screen_width, center_y*screen_height)
 
-    def decrease_zone():
-        global deadZoneX
-        if 0.5 < deadZoneX <= 0.9:
-            deadZoneX -= 0.1
-            print('decreasing val')
-        else:
-            return
+def decrease_zone():
+    global deadZoneX, deadZoneY
+    if deadZoneX > 0.5 and deadZoneY < 0.5:
+        deadZoneX -= 0.1
+        deadZoneY += 0.1
+        print('decreasing zone range', deadZoneX, deadZoneY)
 
-    def increase_zone():
-        global deadZoneY
-        if 0.1 <= deadZoneY < 0.5:
-            deadZoneY += 0.1
-            print('increasing val')
-        else:
-            return
+def increase_zone():
+    global deadZoneX, deadZoneY
+    if deadZoneY > 0.1 and deadZoneX < 0.9:
+        deadZoneY -= 0.1
+        deadZoneX += 0.1
+        print('increasing zone range', deadZoneX, deadZoneY)
 
-    def on_press(key):
-        if any([key in z for z in cmba]):
-            current.add(key)
-            if any(all(k in current for k in z) for z in cmba):
-                decrease_zone()
-                print(deadZoneX)
+def on_press(key):
+    if any([key in z for z in cmba]):
+        current.add(key)
+        if any(all(k in current for k in z) for z in cmba):
+            decrease_zone()
+            print(deadZoneX, deadZoneY)
 
-        if any([key in z for z in cmbz]):
-            current.add(key)
-            if any(all(k in current for k in z) for z in cmbz):
-                increase_zone()
-                print(deadZoneY)
+    if any([key in z for z in cmbz]):
+        current.add(key)
+        if any(all(k in current for k in z) for z in cmbz):
+            increase_zone()
+            print(deadZoneX, deadZoneY)
 
-    def on_release(key):
-        if any([key in z for z in cmba]):
-            current.remove(key)
+def on_release(key):
+    if any([key in z for z in cmba]):
+        current.remove(key)
 
-        # if any([key in z for z in cmbz]):
-        #     current.remove(key)
+    # if any([key in z for z in cmbz]):
+    #     current.remove(key)
 
+def start_listener():
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
 
@@ -112,6 +113,10 @@ def signal_handler(sig, frame):
 my_eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, gaze_data_callback, as_dictionary=True)
 
 signal.signal(signal.SIGINT, signal_handler)
+
+# Start the keyboard listener in a separate thread
+listener_thread = threading.Thread(target=start_listener)
+listener_thread.start()
 
 # Keep the program running
 while True:
